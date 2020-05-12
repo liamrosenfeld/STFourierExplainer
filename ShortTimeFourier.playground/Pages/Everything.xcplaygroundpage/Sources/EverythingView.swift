@@ -44,7 +44,7 @@ public struct EverythingView: View {
                 Spacer()
             }.padding()
         }
-            .frame(minWidth: 1000, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
+            .frame(minWidth: 750, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
             .background(Color.black)
     }
 }

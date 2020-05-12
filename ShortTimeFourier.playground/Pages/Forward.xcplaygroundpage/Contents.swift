@@ -47,96 +47,71 @@
 
 import Accelerate
 
-extension vDSP.FFT where T == DSPSplitComplex {
-    public convenience init?(ofSize size: Int) {
-        // check if the size is a power of two
-        let sizeFloat: Float = Float(size)
-        let lg2 = logbf(sizeFloat)
-        assert(remainderf(sizeFloat, powf(2.0, lg2)) == 0, "size \(size) must be a power of 2")
-
-        // create
-        let log2n = vDSP_Length(log2(sizeFloat))
-        self.init(log2n: log2n, radix: .radix2, ofType: DSPSplitComplex.self)
-    }
-}
-
-public class Fourier {
-    
-    // constants
-    let windowType: vDSP.WindowSequence = .hanningDenormalized
-    let overlapRatio: Int = 8
-    
-    // parameters
-    let size: Int
-    
-    // generated
-    let fftSetUp: vDSP.FFT<DSPSplitComplex>
-    let window: [Float]
-    
-    init(size: Int) {
-        self.size = size
-        self.fftSetUp = vDSP.FFT(ofSize: size)!
-        self.window = vDSP.window(
-            ofType: Float.self,
-            usingSequence: windowType,
-            count: size,
-            isHalfWindow: false
-        )
-    }
-    
-    /// short time fast fourier transform, does not use OLA
-    /// - Parameter inBuffer: Audio data in mono format
-    /// - Returns: the fft for each chunk, each of length `size / 2`
-    func stfft(on inBuffer: [Float]) -> [ComplexBuffer] {
-        // divide into chunks of size
-        var chunks = inBuffer.chunked(into: size)
-        chunks = chunks.map { $0.pad(to: size) }
-        let freqs = chunks.map { chunk in
-            return fft(buffer: chunk)
-        }
-        
-        return freqs
-    }
-
-    /// fast fourier transform
-    /// - Parameter inBuffer: Audio data in mono format
-    /// - Returns: the fft for the entirety of `inBuffer`, of length `size / 2`
-    func fft(buffer inBuffer: [Float]) -> ComplexBuffer {
-        // sizes
-        let outSize = size / 2
-    
-        // create in and out buffers
-        let windowedBuffer = ComplexBuffer(size: outSize)
-        let outBuffer = ComplexBuffer(size: outSize)
-        
-        // apply the window
-        let windowedInterleaved = inBuffer .* window
-        
-        // convert the interleaved vector into a complex split vector.
-        // (moves the even indexed samples into realp and the odd indexed samples into imagp)
-        windowedInterleaved.withUnsafeBytes {
-            vDSP.convert(interleavedComplexVector: [DSPComplex]($0.bindMemory(to: DSPComplex.self)),
-                         toSplitComplexVector: &windowedBuffer.split)
-        }
-
-        // Perform a forward FFT
-        fftSetUp.forward(input: windowedBuffer.split, output: &outBuffer.split)
-
-        
-        return outBuffer
-    }
-}
-
 // The chunk size must be a power of two in order for the "fast" in fast fourier transform to apply
 // The vertical resolution is half the chunk size, but the greater the chunk size the lower the horizontal resolution
 // I found 512 to be a good balance between the two for these samples”
 let size = 512
-let fourier = Fourier(size: size)
 
-let signal = AudioInput.readFile(file: "lick").signal // can change to any file name in resources
+// This gets the amplitudes of the waveform stored in a wav file
+// You can change this to any file in resources (or add your own)
+// Currently it's the lick... mmmmm jazz
+let signal = AudioInput.readFile(file: "lick").signal
 
-// this still contains phase information foe the inverse, which we can get rid of by taking the magnitude of all the complex vectors
-let complexMagsOverTime = fourier.stfft(on: signal)
+//: The STFFT is a bunch of FFTs at it's core, so lets make an accelerate powered FFT function
+//: What it does is explained in the comments
+
+let fft = vDSP.FFT(ofSize: size)!
+let window = vDSP.window(ofSize: size)
+
+func fft(buffer inBuffer: [Float]) -> ComplexBuffer {
+    // the resolution of the output is half of the input size
+    // this is why it's it's good to have a decent but not too large input size
+    let outSize = size / 2
+
+    // these are just empty buffers where we will store stuff
+    // ComplexBuffer stores the real and imaginary arrays in the same place as the DSPComplex so I can worry less about keeping track of memory
+    let windowedBuffer = ComplexBuffer(size: outSize)
+    let outBuffer = ComplexBuffer(size: outSize)
+    
+    // Windowing prevents the spectrogram from having strange bumps
+    // It makes peaks in the waveform closer to the sides of the chunk we are taking count less than peaks in the center
+    // That helps it display but as we’ll see in the next page, it can be problematic when regenerating the signal
+    //
+    // .* is a custom operator implemented in Array+Math.swift that uses accelerate behind the scenes
+    // It's shamelessly copied from matlab. I generally find matlab annoying, but those element-wise operators are an exception.
+    let windowedInterleaved = inBuffer .* window
+    
+    // convert the interleaved vector into a complex split vector.
+    // (moves the even indexed samples into realp and the odd indexed samples into imagp)
+    windowedInterleaved.withUnsafeBytes {
+        vDSP.convert(interleavedComplexVector: [DSPComplex]($0.bindMemory(to: DSPComplex.self)),
+                     toSplitComplexVector: &windowedBuffer.split)
+    }
+
+    // Perform a forward FFT
+    fft.forward(input: windowedBuffer.split, output: &outBuffer.split)
+
+    return outBuffer
+}
+
+//: Now that we have that built, let's use it in a STFFT
+
+// divide the signal into chunks of size
+var chunks = signal.chunked(into: size)
+
+// pad the last chunk with zeros so it can still be analyzed
+chunks[chunks.count - 1] = chunks.last!.pad(to: size)
+
+// now we can apply the FFT to each chunk
+let complexMagsOverTime = chunks.map { chunk in
+    return fft(buffer: chunk)
+}
+
+//: Boom. That's our STFFT
+//: Now we just have to calculate the magnitudes and display it on screen
+
+// complexMagsOverTime contains phase information for the inverse (angle that the complex vector is at)
+// which we can get rid of by taking the magnitude of all the complex vectors
 var mags: [[Float]] = complexMagsOverTime.map { (complexMags: ComplexBuffer) in
     var mags = [Float](repeating: 0.0, count: size / 2)
     vDSP.squareMagnitudes(complexMags.split, result: &mags)
@@ -152,7 +127,15 @@ mags = mags.zerosTrimmed.map {
     return temp
 }
 
-//: Run it to see the spectrogram displayed!
+/*:
+ Run it to see the spectrogram displayed!
+ 
+ Now that we've gotten magnitudes from the signal, lets try to get it back
+
+ [Next](@next)
+*/
+
+
 
 // MARK: - Display
 import PlaygroundSupport
@@ -166,8 +149,4 @@ PlaygroundPage.current.setLiveView(
 )
 
 
-/*:
- Now that we've gotten magnitudes from the signal, lets try to get it back
- 
- [Next](@next)
- */
+
