@@ -9,7 +9,7 @@
 import SwiftUI
 
 public struct EverythingView: View {
-    @ObservedObject private var manager = PlaybackManager()
+    @ObservedObject private var manager = EverythingManager()
     
     public init() { }
     

@@ -73,16 +73,21 @@ func fft(buffer inBuffer: [Float]) -> ComplexBuffer {
     let windowedBuffer = ComplexBuffer(size: outSize)
     let outBuffer = ComplexBuffer(size: outSize)
     
-    // Windowing prevents the spectrogram from having strange bumps
-    // It makes peaks in the waveform closer to the sides of the chunk we are taking count less than peaks in the center
-    // That helps it display but as we’ll see in the next page, it can be problematic when regenerating the signal
+    
+    // Windowing prevents spectral leakage
+    // Spectral leakage is what happens when the chunk taken does not perfectly match the period of the waveform
+    // A FFT effectively assumes that the end of the input leads directly back into the start, causing an infinite loop of a signal
+    // However, if there is a jump between the end and the start the FFT can pick up on false frequencies
+    // Windowing reduces the amplitude of the wave as it approaches the sides of the chunk, so both ends naturally end at 0
+    // This playground uses the Hann window which in my testing I found to be a good balance between not being overly aggressive and still ending at 0
+    // This is generally very beneficial but as we’ll see in the next page, it can be problematic when regenerating the signal
     //
     // .* is a custom operator implemented in Array+Math.swift that uses accelerate behind the scenes
     // It's shamelessly copied from matlab. I generally find matlab annoying, but those element-wise operators are an exception.
     let windowedInterleaved = inBuffer .* window
     
     // convert the interleaved vector into a complex split vector.
-    // (moves the even indexed samples into realp and the odd indexed samples into imagp)
+    // (moves the even indexes into realp and the odd indexes into imagp)
     windowedInterleaved.withUnsafeBytes {
         vDSP.convert(interleavedComplexVector: [DSPComplex]($0.bindMemory(to: DSPComplex.self)),
                      toSplitComplexVector: &windowedBuffer.split)
@@ -140,13 +145,7 @@ mags = mags.zerosTrimmed.map {
 // MARK: - Display
 import PlaygroundSupport
 import SwiftUI
-
-let view = SpectrogramView(Binding.constant(mags))
-PlaygroundPage.current.setLiveView(
-    view
-        .frame(width: 750, height: 500, alignment: .top)
-        .background(Color.black)
-)
+PlaygroundPage.current.setLiveView(ForwardView(mags))
 
 
 

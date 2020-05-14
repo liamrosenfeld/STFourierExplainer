@@ -28,22 +28,16 @@ public class Fourier {
     
     /// creates an instance of Fourier
     /// - Parameter size: size between all functions (ftt: input size, ifft: output size, stfft: chunk size), must be a power fo 2
-    init(size: Int) {
-        // check if the size is a power of two
-        let sizeFloat: Float = Float(size)
-        let lg2 = logbf(sizeFloat)
-        assert(remainderf(sizeFloat, powf(2.0, lg2)) == 0, "size \(size) must be a power of 2")
-        
+    public init(size: Int) {
         // save size
         self.size = size
         self.hop = size / overlapRatio
 
         // create fft setup
-        let log2n = vDSP_Length(log2(sizeFloat))
-        self.fftSetUp = vDSP.FFT(log2n: log2n, radix: .radix2, ofType: DSPSplitComplex.self)!
+        self.fftSetUp = vDSP.FFT(ofSize: size)!
         
         // create windows
-        self.window = vDSP.window(ofType: Float.self, usingSequence: windowType, count: size, isHalfWindow: false)
+        self.window = vDSP.window(ofSize: size)
     }
     
     /// short time fast fourier transform, uses OLA
@@ -51,9 +45,9 @@ public class Fourier {
     /// - Returns: the fft for each chunk, each of length `size / 2`
     ///
     /// hop size is `size / overlapRatio`
-    func stfftOLA(on inBuffer: [Float]) -> [ComplexBuffer] {
+    public func stfftOLA(on inBuffer: [Float]) -> [ComplexBuffer] {
         // divide into chunks of size
-        var chunks = inBuffer.chunked(into: size, hop: size / 8)
+        var chunks = inBuffer.chunked(into: size, hop: hop)
         chunks = chunks.map { $0.pad(to: size) }
         
         let freqs = chunks.map { chunk in
@@ -66,20 +60,22 @@ public class Fourier {
     /// inverse short time fast fourier transform, uses OLA
     /// - Parameter complexBuffer: Complex buffer from `stfftOLA`
     /// - Returns: the original signal, of length `size`
-    func istfftOLA(on complexBuffer: [ComplexBuffer]) -> [Float] {
+    public func istfftOLA(on complexBuffer: [ComplexBuffer]) -> [Float] {
         let chunksAgain: [[Float]] = complexBuffer.map { ifft(complexBuffer: $0.split) }
         
+        // calculate final size
         let finalLength = chunksAgain.count * hop
+        let overlapRatio = size / hop
+        
+        // combine all the chunks, adding parts that overlap
         var signal: [Float] = [Float](repeating: 0, count: finalLength + size)
         for (index, start) in stride(from: 0, to: finalLength - 1, by: hop).enumerated() {
-            let range = start..<start+size
-            let existingPart = signal[range]
-            let newPart = chunksAgain[index]
-            let added = Array(existingPart) .+ newPart
+            let range = start..<(start+size)
+            let added = signal[range] .+ chunksAgain[index]
             signal.replaceSubrange(range, with: added)
         }
         
-        // scale it down
+        // scale it down to go back to original magnitude
         signal = signal / Float(overlapRatio / 2)
         
         return signal
@@ -88,7 +84,7 @@ public class Fourier {
     /// short time fast fourier transform, does not use OLA
     /// - Parameter inBuffer: Audio data in mono format
     /// - Returns: the fft for each chunk, each of length `size / 2`
-    func stfft(on inBuffer: [Float]) -> [ComplexBuffer] {
+    public func stfft(on inBuffer: [Float]) -> [ComplexBuffer] {
         // divide into chunks of size
         var chunks = inBuffer.chunked(into: size)
         chunks = chunks.map { $0.pad(to: size) }
@@ -102,7 +98,7 @@ public class Fourier {
     /// fast fourier transform
     /// - Parameter inBuffer: Audio data in mono format
     /// - Returns: the fft for the entirity of `inBuffer`, of length `size / 2`
-    func fft(buffer inBuffer: [Float]) -> ComplexBuffer {
+    public func fft(buffer inBuffer: [Float]) -> ComplexBuffer {
         // sizes
         let outSize = size / 2
     
@@ -128,7 +124,7 @@ public class Fourier {
     }
 
 
-    func ifft(complexBuffer: DSPSplitComplex) -> [Float] {
+    public func ifft(complexBuffer: DSPSplitComplex) -> [Float] {
         // do inverse
         let inSize = size / 2
         let outputBuffer = ComplexBuffer(size: inSize)
@@ -139,10 +135,23 @@ public class Fourier {
         return [Float](fromSplitComplex: outputBuffer.split, scale: scale, count: size)
     }
     
-    /// A convenience function that converts a split complex vector to its linear magnitudes (squared).
+    /// converts a split complex vector to its linear magnitudes (squared).
     static func magnitudes(for complexBuffer: DSPSplitComplex, size: Int) -> [Float] {
         var magnitudes = [Float](repeating: 0.0, count: size)
         vDSP.squareMagnitudes(complexBuffer, result: &magnitudes)
         return magnitudes
+    }
+    
+    /// trims all upper frequencies that are blank to zoom in and converts to decibels
+    public func prepMagsForDisplay(_ complexBuffers: [ComplexBuffer]) -> [[Float]] {
+        let mags = complexBuffers.map { complexBuffer in
+            Fourier.magnitudes(for: complexBuffer.split, size: size / 2)
+        }
+        
+        return mags.zerosTrimmed.map {
+            let temp = vDSP.amplitudeToDecibels($0, zeroReference: 0.1)
+            return temp
+        }
+        
     }
 }

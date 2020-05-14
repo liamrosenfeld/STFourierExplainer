@@ -14,20 +14,32 @@ import Accelerate
 infix operator .+ : AdditionPrecedence
 infix operator .* : MultiplicationPrecedence
 
-public extension Array where Element == Float {
+public extension AccelerateBuffer where Element == Float {
     
     // array and array
-    static func .+ (lhs: Self, rhs: Self) -> Self {
+    static func .+ (lhs: Self, rhs: Self) -> [Float] {
         return vDSP.add(lhs, rhs)
     }
     
-    static func .* (lhs: Self, rhs: Self) -> Self {
+    static func .* (lhs: Self, rhs: Self) -> [Float] {
+        return vDSP.multiply(lhs, rhs)
+    }
+    
+    static func .* (lhs: ArraySlice<Float>, rhs: Self) -> [Float] {
         return vDSP.multiply(lhs, rhs)
     }
     
     // scalar and array
-    static func / (lhs: Self, rhs: Float) -> Self {
+    static func / (lhs: Self, rhs: Float) -> [Float] {
         return vDSP.multiply(1.0 / rhs, lhs)
+    }
+    
+}
+
+public extension ArraySlice where Element == Float {
+    
+    static func .+ (lhs: ArraySlice<Float>, rhs: Array<Float>) -> [Float] {
+        return vDSP.add(lhs, rhs)
     }
     
 }

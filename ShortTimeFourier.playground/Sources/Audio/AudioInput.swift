@@ -26,3 +26,10 @@ public extension AVAudioPCMBuffer {
         Array(UnsafeBufferPointer(start: self.floatChannelData?[0], count: Int(self.frameLength)))
     }
 }
+
+public enum AudioFile: String, CaseIterable {
+    case lick
+    case lickOctaves
+    case lickChords
+    case oneNote
+}
