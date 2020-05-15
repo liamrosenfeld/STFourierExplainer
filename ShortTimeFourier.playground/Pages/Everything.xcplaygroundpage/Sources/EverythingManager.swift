@@ -7,11 +7,12 @@
 //
 
 import Foundation
+import SwiftUI
 import Combine
 import AVFoundation
 
 class EverythingManager: ObservableObject {
-    // UI
+    // External
     @Published var file: AudioFile {
         didSet {
             fileUpdated()
@@ -20,14 +21,16 @@ class EverythingManager: ObservableObject {
     
     @Published var magsForDisplay: [[Float]] = []
     
+    @Published var sampleRate: Double = 0
+    
     // Internal
     private var input: AVAudioPCMBuffer = AVAudioPCMBuffer()
-    private var sampleRate: Double = 0
     private var signal: [Float] = []
     private var signalAgain: [Float] = []
 
     // constants
     let chunkSize = 512
+    var origResolution = Binding.constant(256)
     
     init() {
         self.file = .lick

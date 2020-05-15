@@ -3,6 +3,7 @@
     <pages>
         <page name='Forward'/>
         <page name='Inverse'/>
+        <page name='Manipulation'/>
         <page name='Everything'/>
     </pages>
 </playground>

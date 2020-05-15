@@ -9,32 +9,44 @@
 import SwiftUI
 
 public struct InverseView: View {
+    // spectrogram
     @State private var magsForDisplay: [[Float]]
+    @State private var sampleRate: Double
+    @State private var origResolution: Int
     
     // playback
     private var player: Player
     private var signalOrig: [Float]
     private var signalInvNoOLA: [Float]
     private var signalInvOLA: [Float]
-
+    
     public init(
         magsForDisplay: [[Float]],
         signalOrig: [Float],
         signalInvNoOLA: [Float],
         signalInvOLA: [Float],
-        sampleRate: Double
+        sampleRate: Double,
+        origResolution: Int
     ) {
-        self._magsForDisplay = State(initialValue: magsForDisplay)
+        // playback
         self.player = Player(sampleRate: sampleRate)
         self.signalOrig = signalOrig
         self.signalInvNoOLA = signalInvNoOLA
         self.signalInvOLA = signalInvOLA
+        
+        // spectrogram
+        self._magsForDisplay = State(initialValue: magsForDisplay)
+        self._sampleRate = State(initialValue: sampleRate)
+        self._origResolution = State(initialValue: origResolution)
     }
 
     public var body: some View {
         VStack {
-            SpectrogramView($magsForDisplay)
-                .background(Color.black)
+            SpectrogramView(
+                $magsForDisplay,
+                sampleRate: $sampleRate,
+                origResolution: $origResolution
+            ).background(Color.black)
 
             HStack {
                 Spacer()

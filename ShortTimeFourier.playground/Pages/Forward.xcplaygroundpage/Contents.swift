@@ -40,7 +40,9 @@
  
  Spectrograms are a representation of all the magnitudes of the component frequencies of a sound over time.
  
- The spectrogram that will be used throughout this playground will have time going from left to right and frequency going from bottom to top.
+ The spectrogram that will be used throughout this playground will have time going from left to right and frequency (in hertz) going from bottom to top.
+ 
+ The code that draws the spectrogram using core graphics can be found in `Spectrogram/NSSpectrogramView.swift` in the global Sources folder
  
  Let's use a STFFT to generate a spectrogram!
  */
@@ -55,7 +57,8 @@ let size = 512
 // This gets the amplitudes of the waveform stored in a wav file
 // You can change this to any file in resources (or add your own)
 // Currently it's the lick... mmmmm jazz
-let signal = AudioInput.readFile(file: "lick").signal
+let file = AudioInput.readFile(file: "lick")
+let signal = file.signal
 
 //: The STFFT is a bunch of FFTs at it's core, so lets make an accelerate powered FFT function
 //: What it does is explained in the comments
@@ -138,6 +141,14 @@ mags = mags.zerosTrimmed.map {
  Now that we've gotten magnitudes from the signal, lets try to get it back
 
  [Next](@next)
+ 
+ _Side Note:_
+ 
+ If you're wondering why the spectrogram view below takes the sample rate of the file when it's totally unrelated to playback, it's because the Nyquist frequency of the an audio file (which is the maximum frequency a file can support) is half of it's sample rate.
+ 
+ The Nyquist frequency is then used to label they y axis with frequencies as it is the frequency represented by the last element in the complex buffer.
+ 
+ The implementation can be found in `Spectrogram/NSSpectrogramView.swift` in the global Sources folder.
 */
 
 
@@ -145,7 +156,13 @@ mags = mags.zerosTrimmed.map {
 // MARK: - Display
 import PlaygroundSupport
 import SwiftUI
-PlaygroundPage.current.setLiveView(ForwardView(mags))
+PlaygroundPage.current.setLiveView(
+    ForwardView(
+        mags,
+        sampleRate: file.format.sampleRate,
+        origResolution: size / 2
+    )
+)
 
 
 

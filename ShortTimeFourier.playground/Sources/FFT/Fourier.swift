@@ -16,7 +16,7 @@ public class Fourier {
     
     // constants
     let windowType: vDSP.WindowSequence = .hanningDenormalized
-    let overlapRatio: Int = 8
+    let overlapRatio: Int = 4
     
     // parameters
     let size: Int

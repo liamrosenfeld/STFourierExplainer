@@ -67,6 +67,8 @@ let signalAgain: [Float] = chunksAgain.flatMap { $0 }
  
  ## The Overlap-Add Method
  
+ By doing OLA we’re able to have the inverse still include the components that were previously reduced.
+ 
  As you probably could figure the overlap-add method has two main components: overlapping and adding.
  
  The overlap component starts with the forward fourier transform. The chunks are taken from the signal where the starting position of the chunk only increases by specific hop size each chunk. That means they all overlap.
@@ -153,6 +155,7 @@ PlaygroundPage.current.setLiveView(
         signalOrig: signal,
         signalInvNoOLA: signalAgain,
         signalInvOLA: signalAgainOLA,
-        sampleRate: file.format.sampleRate
+        sampleRate: file.format.sampleRate,
+        origResolution: size / 2
     )
 )
