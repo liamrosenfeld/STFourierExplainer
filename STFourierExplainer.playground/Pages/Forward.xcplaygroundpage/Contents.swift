@@ -12,7 +12,7 @@
  
  Now without further ado, let's dig into this together.
  
- _(If you just want to use the final product, jump to the [last page](Everything))_
+ _(If you want to skip the explanation, jump to the [last page](Everything))_
 
  
  ## A Brief Recap of the Fourier Transform
