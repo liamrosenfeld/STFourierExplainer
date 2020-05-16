@@ -142,20 +142,11 @@ mags = mags.zerosTrimmed.map {
 
  [Next](@next)
  
- _Side Note:_
- 
- If you're wondering why the spectrogram view below takes the sample rate of the file when it's totally unrelated to playback, it's because the Nyquist frequency of the an audio file (which is the maximum frequency a file can support) is half of it's sample rate.
- 
- The Nyquist frequency is then used to label they y axis with frequencies as it is the frequency represented by the last element in the complex buffer.
- 
- The implementation can be found in `Spectrogram/NSSpectrogramView.swift` in the global Sources folder.
 */
-
 
 
 // MARK: - Display
 import PlaygroundSupport
-import SwiftUI
 PlaygroundPage.current.setLiveView(
     ForwardView(
         mags,

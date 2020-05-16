@@ -147,8 +147,6 @@ let signalAgainOLA = overlapAdd(chunksAgainOLA, size: size, hop: hop)
 
 // MARK: - Display
 import PlaygroundSupport
-import SwiftUI
-
 PlaygroundPage.current.setLiveView(
     InverseView(
         magsForDisplay: magsForDisplay,
