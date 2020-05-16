@@ -11,8 +11,8 @@ import Accelerate
 /// DSPSplitComplex but it has the real and imag part bundled.
 /// So it can be passed around different scopes without the arrays being deinit
 public class ComplexBuffer {
-    private var real: [Float]
-    private var imag: [Float]
+    public var real: [Float]
+    public var imag: [Float]
     
     public  var split: DSPSplitComplex
     

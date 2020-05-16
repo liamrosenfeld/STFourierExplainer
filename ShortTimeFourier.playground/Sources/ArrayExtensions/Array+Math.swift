@@ -38,7 +38,7 @@ public extension AccelerateBuffer where Element == Float {
 
 public extension ArraySlice where Element == Float {
     
-    static func .+ (lhs: ArraySlice<Float>, rhs: Array<Float>) -> [Float] {
+    static func .+ (lhs: Self, rhs: Array<Float>) -> [Float] {
         return vDSP.add(lhs, rhs)
     }
     
