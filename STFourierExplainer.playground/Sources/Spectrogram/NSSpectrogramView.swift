@@ -11,32 +11,38 @@ import CoreGraphics
 
 public class NSSpectrogramView: NSView {
     
+    // MARK: - Inputs
     public var magsOverTime: [[Float]] = []
-    
-    let labelWidth: CGFloat = 50
     
     var nyquistFreq        = 0
     var originalResolution = 0
     var trimmedResolution  = 0
     
+    var guidelines: [Float] = []
+    
+    // MARK: - Constants
+    let textWidth: CGFloat = 50
+    
+    // MARK: - Drawing
     public override func draw(_ rect: CGRect) {
         if magsOverTime.isEmpty {
             return
         }
-        drawSpectrogram()
-        drawLabels()
-    }
-    
-    private func drawSpectrogram() {
-        // setup core graphics context
         guard let context = NSGraphicsContext.current?.cgContext else {
             print("could not get context")
             return
         }
+        drawSpectrogram(context: context)
+        drawLabels(context: context)
+        drawGuidelines(context: context)
+    }
+    
+    private func drawSpectrogram(context: CGContext) {
+        // save context
         context.saveGState()
         
         // get sizes
-        let viewWidth = self.bounds.size.width - labelWidth
+        let viewWidth = self.bounds.size.width - textWidth
         let viewHeight = self.bounds.size.height
         
         let colWidth = viewWidth / CGFloat(magsOverTime.count)
@@ -47,7 +53,7 @@ public class NSSpectrogramView: NSView {
         let headroom = maxDB - minDB
         
         // draw
-        var x: CGFloat = 50 // leave room for text on side
+        var x: CGFloat = textWidth
         for mags in magsOverTime {
             let magsPerSet = mags.count
             let magRectHeight = viewHeight / CGFloat(magsPerSet)
@@ -71,16 +77,44 @@ public class NSSpectrogramView: NSView {
             x += colWidth
         }
         
-        // restore cg context state
+        // restore context
         context.restoreGState()
     }
     
-    private func drawLabels() {
-       // setup core graphics context
-        guard let context = NSGraphicsContext.current?.cgContext else {
-            print("could not get context")
+    private func drawGuidelines(context: CGContext) {
+        if guidelines.count == 0 {
             return
         }
+        
+        // setup context
+        context.saveGState()
+        context.setFillColor(NSColor.blue.cgColor)
+        
+        // get external sizes
+        let viewHeight = self.bounds.size.height
+        let viewWidth = self.bounds.size.width
+        let heightPerBand = viewHeight / CGFloat(trimmedResolution)
+        
+        // calc rect sizes
+        let x = textWidth
+        let width = viewWidth - textWidth
+        let height = heightPerBand / 2
+        
+        for freq in guidelines {
+            let y = CGFloat(bandForFreq(freq)) * heightPerBand
+            
+            // draw rectangle
+            let rect = CGRect(x: x, y: y, width: width, height: height)
+            context.addRect(rect)
+            context.drawPath(using: .fill)
+        }
+        
+        // restore context
+        context.restoreGState()
+    }
+    
+    private func drawLabels(context: CGContext) {
+        // save context
         context.saveGState()
         
         let viewHeight = CGFloat(self.bounds.size.height)
@@ -102,16 +136,19 @@ public class NSSpectrogramView: NSView {
             drawString(String(freqBetweenLabels * labelNumber), x: 0, y: CGFloat(labelNumber) * pixelsBetweenLabels, context: context)
         }
         
-        // restore cg context state
+        // restore context
         context.restoreGState()
     }
     
-    private func bandForFreq(_ freq: Float, nyquistFreq: Int, numBands: Int) -> Int {
-        let freqPerBand = nyquistFreq / numBands
+    // MARK: - Helper Funcs
+    private func bandForFreq(_ freq: Float) -> Int {
+        // scale down the highest frequency of the original complex buffer to the highest frequency we are actually displaying
+        let highestFreq = Int(CGFloat(nyquistFreq) * (CGFloat(trimmedResolution) / CGFloat(originalResolution)))
+        let freqPerBand = highestFreq / trimmedResolution
         let band = freq / Float(freqPerBand)
         return Int(band)
     }
-    
+
     private func drawString(_ string: String, x: CGFloat, y: CGFloat, context: CGContext) {
         
         let paragraphStyle = NSMutableParagraphStyle()
@@ -125,7 +162,7 @@ public class NSSpectrogramView: NSView {
 
         let attributedString = NSAttributedString(string: string, attributes: attributes)
 
-        let stringRect = CGRect(x: x, y: y, width: labelWidth, height: 13)
+        let stringRect = CGRect(x: x, y: y, width: textWidth, height: 13)
         attributedString.draw(in: stringRect)
     }
     

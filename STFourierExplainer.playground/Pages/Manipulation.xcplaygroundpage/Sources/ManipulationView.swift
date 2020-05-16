@@ -18,6 +18,8 @@ public struct ManipulationView: View {
     @State var sampleRate: Double
     @State var origResolution: Int
     
+    @State var guidelines: [Float]
+    
     private var player: Player
     
     public init(
@@ -26,7 +28,8 @@ public struct ManipulationView: View {
         origSignal: [Float],
         modSignal: [Float],
         sampleRate: Double,
-        origResolution: Int
+        origResolution: Int,
+        guidelines: [Float]
     ) {
         self._origMags = State(initialValue: origMags)
         self._modMags = State(initialValue: modMags)
@@ -36,6 +39,8 @@ public struct ManipulationView: View {
         
         self._sampleRate = State(initialValue: sampleRate)
         self._origResolution = State(initialValue: origResolution)
+        
+        self._guidelines = State(initialValue: guidelines)
         
         self.player = Player(sampleRate: sampleRate)
     }
@@ -52,7 +57,7 @@ public struct ManipulationView: View {
                     Text("Play")
                 })
             }
-            SpectrogramView($origMags, sampleRate: $sampleRate, origResolution: $origResolution)
+            SpectrogramView($origMags, sampleRate: $sampleRate, origResolution: $origResolution, guidelines: $guidelines)
                 .frame(minWidth: 750, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
                 .padding()
             

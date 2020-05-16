@@ -69,6 +69,7 @@ let window = vDSP.window(ofSize: size)
 func fft(buffer inBuffer: [Float]) -> ComplexBuffer {
     // the resolution of the output is half of the input size
     // this is why it's it's good to have a decent but not too large input size
+    // the resolution does not have a 1:1 ratio for frequency, so similar frequencies are essentially combined into a "band"
     let outSize = size / 2
 
     // these are just empty buffers where we will store stuff

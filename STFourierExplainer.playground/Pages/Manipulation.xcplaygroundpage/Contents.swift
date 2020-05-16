@@ -33,7 +33,7 @@ let origMags = fourier.prepMagsForDisplay(stfftDisplay)
  
  It is the top frequency of the top band, so it provides a hard ceiling that everything else can be equally distributed under.
  
- This same function is used in global `Sources/Spectrogram/NSSpectrogramView.swift` in order to draw the y-axis frequency labels.
+ A similar method is used in `Sources/Spectrogram/NSSpectrogramView.swift` in order to draw the y-axis frequency labels and the frequency guidelines.
 */
  
 func bandForFreq(_ freq: Float, nyquistFreq: Int, numBands: Int) -> Int {
@@ -44,15 +44,23 @@ func bandForFreq(_ freq: Float, nyquistFreq: Int, numBands: Int) -> Int {
 
 //: Now let's remove the components that contain frequency information for the unwanted sine wave
 
+// for this example we'll remove frequencies 3250-3750 to get all the ringing out
+// this range is demarcated by blue lines in the live view
+// it snaps to the bottom of each band, just like bandForFreq does
+// so while the lines may not appear evenly centered in respect to the y-axis, it reflects where the operation actually will take place
+let lowerFreq: Float = 3250
+let upperFreq: Float = 3750
+
 // find the band range that correspond to the frequency range we want to remove
 let nyquistFreq = Int(file.format.sampleRate / 2)
 let numBands = size / 2
-let lower = bandForFreq(3250, nyquistFreq: nyquistFreq, numBands: numBands)
-let upper = bandForFreq(3750, nyquistFreq: nyquistFreq, numBands: numBands)
-let range = lower..<upper
+
+let lowerBand = bandForFreq(lowerFreq, nyquistFreq: nyquistFreq, numBands: numBands)
+let upperBand = bandForFreq(upperFreq, nyquistFreq: nyquistFreq, numBands: numBands)
+let range = lowerBand..<upperBand
 
 // create zero array to replace each section with
-let length = range.upperBound - range.lowerBound - 1
+let length = range.count
 let zeros = [Float](repeating: 0, count: length)
 
 // replace each section over time
@@ -91,6 +99,7 @@ PlaygroundPage.current.setLiveView(
         origSignal: signal,
         modSignal: modifiedSignal,
         sampleRate: file.format.sampleRate,
-        origResolution: size / 2
+        origResolution: size / 2,
+        guidelines: [lowerFreq, upperFreq]
     )
 )
