@@ -41,7 +41,7 @@ public class NSSpectrogramView: NSView {
         
         let colWidth = viewWidth / CGFloat(magsOverTime.count)
         
-        // get decible range
+        // get decibel range
         let maxDB: Float = 95.0
         let minDB: Float = -32.0
         let headroom = maxDB - minDB
@@ -54,12 +54,12 @@ public class NSSpectrogramView: NSView {
             
             var y: CGFloat = 0
             for magnitude in mags {
-                // set color to decible percent of headroom
+                // set color to decibel percent of headroom
                 let colorPercent = magnitude / headroom
                 let color = rygGradient(at: CGFloat(colorPercent))
                 context.setFillColor(color)
                 
-                // draw rectange
+                // draw rectangle
                 let path = CGRect(x: x, y: y, width: colWidth, height: magRectHeight)
                 context.addRect(path)
                 context.drawPath(using: .fill)
@@ -86,22 +86,30 @@ public class NSSpectrogramView: NSView {
         let viewHeight = CGFloat(self.bounds.size.height)
         
         // scale down the highest frequency of the original complex buffer to the highest frequency we are actually displaying
-        let heighestFreq = Int(CGFloat(nyquistFreq) * (CGFloat(trimmedResolution) / CGFloat(originalResolution)))
+        let highestFreq = Int(CGFloat(nyquistFreq) * (CGFloat(trimmedResolution) / CGFloat(originalResolution)))
         
-        // spread out the labels a bit so it's not too cluttered
-        let amountOfLabels = trimmedResolution / 10
+        // put a label every 500 hertz
+        let freqBetweenLabels = 500
+        let numLabels = Int(highestFreq / freqBetweenLabels)
+        let unlabeledSpace = highestFreq % freqBetweenLabels
+        let unlabeledRatio = CGFloat(highestFreq - unlabeledSpace) / CGFloat(highestFreq)
         
-        // find how much goes to each label
-        let freqBetweenLabels = heighestFreq / amountOfLabels
-        let pixelsBetweenLabels = viewHeight / CGFloat(amountOfLabels)
+        // find how spaced out each label is
+        let pixelsBetweenLabels = (viewHeight * unlabeledRatio) / CGFloat(numLabels)
         
         // draw all the labels
-        for labelNumber in 0..<amountOfLabels {
+        for labelNumber in 0..<numLabels {
             drawString(String(freqBetweenLabels * labelNumber), x: 0, y: CGFloat(labelNumber) * pixelsBetweenLabels, context: context)
         }
         
         // restore cg context state
         context.restoreGState()
+    }
+    
+    private func bandForFreq(_ freq: Float, nyquistFreq: Int, numBands: Int) -> Int {
+        let freqPerBand = nyquistFreq / numBands
+        let band = freq / Float(freqPerBand)
+        return Int(band)
     }
     
     private func drawString(_ string: String, x: CGFloat, y: CGFloat, context: CGContext) {
@@ -117,7 +125,7 @@ public class NSSpectrogramView: NSView {
 
         let attributedString = NSAttributedString(string: string, attributes: attributes)
 
-        let stringRect = CGRect(x: x, y: y, width: labelWidth, height: 12)
+        let stringRect = CGRect(x: x, y: y, width: labelWidth, height: 13)
         attributedString.draw(in: stringRect)
     }
     
