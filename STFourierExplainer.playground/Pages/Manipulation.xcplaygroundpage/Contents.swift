@@ -5,7 +5,7 @@
 
  To return to the smoothie analogy, imagine if you made a large amount of mixed berry smoothie. However, someone that you were going to give it to doesn’t like blueberries. Un-blending the smoothie would allow you to remove those blueberries after the fact. That is effectively what we’re going to do to the ringing in this waveform.
 
- In the interest of speed and simplicity, this example will just zero out the components we want to remove. In full applications the modification process would be a lot more nuanced so it is not as destructive to the signal we want to save, but it would still be the same general idea.
+ In the interest of speed and simplicity, this example will zero out the components we want to remove. In full applications the modification process would be a lot more nuanced so it is not as destructive to the signal we want to save, but it would still be the same general idea.
  
  To demonstrate this removal I modified the piano track of the lick by adding in a 3500 Hz sine wave. It's high enough that's its noticeable but not overly unpleasant (though I wouldn't recommend turning your speakers that high on this page).
 
@@ -27,7 +27,7 @@ let origMags = fourier.prepMagsForDisplay(stfftDisplay)
 /*:
  Now we need a way to translate from what frequency we want into the respective index of the complex buffer.
  
- The Nyquist frequency of the an audio file (which is the maximum frequency a file can support) is half of it's sample rate.
+ The Nyquist frequency of the an audio file (which is the maximum frequency a file can support) is half of its sample rate.
  
  That is because if a component as such a high frequency that the sample rate can't pick up on peaks, it won't be able to be stored.
  
@@ -42,16 +42,16 @@ func bandForFreq(_ freq: Float, nyquistFreq: Int, numBands: Int) -> Int {
     return Int(band)
 }
 
-//: Now let's remove the components that contain frequency information for the unwanted sine wave
+//: Now let's remove the components that contain frequency information for the unwanted sine wave.
 
-// for this example we'll remove frequencies 3250-3750 to get all the ringing out
-// this range is demarcated by blue lines in the live view
-// it snaps to the bottom of each band, just like bandForFreq does
-// so while the lines may not appear evenly centered in respect to the y-axis, it reflects where the operation actually will take place
+// For this example we'll remove frequencies 3250-3750 to remove all the ringing
+// This range is demarcated by blue lines in the live view
+// It snaps to the bottom of each band, which matches the behavior of bandForFreq (what is used for selecting the bands to zero out)
+// So while the lines may not appear evenly centered in respect to the y-axis, it reflects where the operation actually will take place
 let lowerFreq: Float = 3250
 let upperFreq: Float = 3750
 
-// find the band range that correspond to the frequency range we want to remove
+// Find the band range that correspond to the frequency range we want to remove
 let nyquistFreq = Int(file.format.sampleRate / 2)
 let numBands = size / 2
 
@@ -59,21 +59,21 @@ let lowerBand = bandForFreq(lowerFreq, nyquistFreq: nyquistFreq, numBands: numBa
 let upperBand = bandForFreq(upperFreq, nyquistFreq: nyquistFreq, numBands: numBands)
 let range = lowerBand..<upperBand
 
-// create zero array to replace each section with
+// Create zero array to replace each section with
 let length = range.count
 let zeros = [Float](repeating: 0, count: length)
 
-// replace each section over time
+// Replace each section over time
 for complexBuffer in stfftOLA {
     complexBuffer.real.replaceSubrange(range, with: zeros)
     complexBuffer.imag.replaceSubrange(range, with: zeros)
 }
 
-//: Now we can do the inverse to get a signal from the modified components
+//: Now we can do the inverse to get a signal from the modified components.
 
 let modifiedSignal = fourier.istfftOLA(on: stfftOLA)
 
-//: And do a non OLA forward to display on the spectrogram
+//: And do a non-OLA forward to display on the spectrogram.
 
 let modifiedStfft = fourier.stfft(on: modifiedSignal)
 let modifiedMags  = fourier.prepMagsForDisplay(modifiedStfft)
@@ -85,7 +85,7 @@ let modifiedMags  = fourier.prepMagsForDisplay(modifiedStfft)
  512 tends to be a good balance, but it's far from a 1:1 proportion.
  That sloppiness is why we had to remove a good chunk around 3500 Hz to remove the troublesome sine wave.
  
- The next page provides a live view interface to play with the concepts from the last three pages
+ The next page provides a live view interface to play with the concepts from the last three pages.
  
  [Next](@next)
  */

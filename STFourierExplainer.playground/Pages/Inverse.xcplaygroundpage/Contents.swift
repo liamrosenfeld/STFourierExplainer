@@ -11,9 +11,9 @@
  
  */
 
-//: Let's first do another forward STFFT
+//: Let's first do another forward STFFT.
 //:
-//: This has been moved to functions so it takes up less space
+//: This has been moved to functions so it takes up less space.
 let file = AudioInput.readFile(file: "lick")
 let signal = file.signal
 
@@ -22,8 +22,8 @@ let fourier = Fourier(size: size)
 let stfft = fourier.stfft(on: signal)
 let magsForDisplay = fourier.prepMagsForDisplay(stfft)
 
-//: Just like the forward STFFT, the inverse STFFT is foundationally a series of FFTs.
-//: Just this time they are the inverse FFT instead of the forward FFT.
+//: Like the forward STFFT, the inverse STFFT is foundationally a series of FFTs.
+//: However, this time they are the inverse FFT instead of the forward FFT.
 
 import Accelerate
 
@@ -31,20 +31,20 @@ let fft = vDSP.FFT(ofSize: size)!
 let window = vDSP.window(ofSize: size)
 
 func ifft(complexBuffer: DSPSplitComplex) -> [Float] {
-    // the inverse function returns a complex buffer that is then converted back into
+    // The inverse function returns a complex buffer that is then converted back into
     // an array of floats, so the output buffer needs to be half of the original chunk size
     let outputSize = size / 2
     let outputBuffer = ComplexBuffer(size: outputSize)
     
-    // now we can pass our complex buffer in and have it write the output to the output buffer
+    // Now we can pass our complex buffer in and have it write the output to the output buffer
     fft.inverse(input: complexBuffer, output: &outputBuffer.split)
     
-    // and then convert our complex buffer into an array of floats which is the original length
+    // And then convert our complex buffer into an array of floats which is the original length
     let scale = 1 / Float(size * 2)
     return [Float](fromSplitComplex: outputBuffer.split, scale: scale, count: size)
 }
 
-//: For now, let's have our ISTFFT be just the exact opposite of STFFT, we'll get into better methods soon.
+//: For now, let's have our ISTFFT be the exact opposite of STFFT—we'll get into better methods soon.
 
 let chunksAgain: [[Float]] = stfft.map { ifft(complexBuffer: $0.split) }
 let signalAgain: [Float] = chunksAgain.flatMap { $0 }
@@ -71,9 +71,9 @@ let signalAgain: [Float] = chunksAgain.flatMap { $0 }
  
  As you probably could figure the overlap-add method has two main components: overlapping and adding.
  
- The overlap component starts with the forward fourier transform. The chunks are taken from the signal where the starting position of the chunk only increases by specific hop size each chunk. That means they all overlap.
+ The overlap component starts with the forward fourier transform. The chunks are taken from the signal where the starting position of the chunk only increases by specific amount that is less than the chunk size each chunk. That distance will be referred to as the hop size. Since the hop size is less than the chunk size, the chunks will overlap.
  
- The add component then comes in during the inverse. After each chunk's complex buffer goes through the IFFT to turn back into signal, They are then recombined into the original signal, with overlapping sections adding together.
+ The add component then comes in during the inverse. After each chunk's complex buffer goes through the IFFT to turn back into signal, they are then recombined into the original signal, with overlapping sections adding together.
  
  2 is the standard overlap ratio so for higher quality regenerations that use more overlaps, the final signal needs to be scaled down by `overlapRatio / 2`
  
@@ -82,23 +82,23 @@ let signalAgain: [Float] = chunksAgain.flatMap { $0 }
  To demonstrate this, we first need to do a forward STFFT but have it overlap
  */
 
-// just like the normal STFFT, we first need to divide the signal into chunks of size
-// the difference is that now those chunks are overlapping
+// Like the normal STFFT, we first need to divide the signal into chunks of size
+// The difference is that now those chunks are overlapping
 let overlapRatio = 4
 let hop = size / overlapRatio
 var chunks = signal.chunked(into: size, hop: hop)
 chunks = chunks.map { $0.pad(to: size) }
 
-// Then apply a FFT to each chunk individually, just like the normal STFFT
+// Then apply a FFT to each chunk individually, like the normal STFFT
 let stfftOLA = chunks.map { fourier.fft(buffer: $0) }
     
-//: Now let's do the inverse
+//: Now let's do the inverse.
 let chunksAgainOLA: [[Float]] = stfftOLA.map { ifft(complexBuffer: $0.split) }
 
 /*:
  The updating results side bar is too expensive for this highly iterative operation.
- It makes an operation that normally takes an unnoticeable amount of time to run take 3 minutes.
- Because of that limitation in playgrounds, this section of notated code will be located in `InverseOLA.swift` in the `Sources` folder under this page and just called as a function here.
+ The operation would normally take an unnoticeable amount of time, but with the result side bar it takes 3 minutes.
+ Because of that limitation in playgrounds, this section of notated code will be located in `InverseOLA.swift` in the `Sources` folder under this page and called as a function here.
  */
 
 let signalAgainOLA = overlapAdd(chunksAgainOLA, size: size, hop: hop)
@@ -132,13 +132,13 @@ let signalAgainOLA = overlapAdd(chunksAgainOLA, size: size, hop: hop)
  
  Now if you listen to "Inverse With OLA" in the live view you can hear a reconstructed signal without it being a garbled mess.
  
- If we check on the signal in matplotlib we can see that while there are slight discrepancies, it is largely the same:
+ If we check on the signal in matplotlib we can see that, while there are slight discrepancies, it is largely the same:
  
  ![OLA inverse compared to original](ola_inverse.png)
  
  ## But why?
  
- You may be wondering what's the point of doing all this when the result is just what you put in.
+ You may be wondering what's the point of doing all this when the result is essentially what you already had.
  
  Other then it just being interesting, it's an opportunity to mess with the component frequencies to manipulate the waveform.
  
