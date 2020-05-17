@@ -27,9 +27,9 @@ public extension AVAudioPCMBuffer {
     }
 }
 
-public enum AudioFile: String, CaseIterable {
-    case lick
-    case lickOctaves
-    case lickChords
-    case oneNote
+public var audioFiles: [String] {
+    let urls: [URL] = Bundle.main.urls(forResourcesWithExtension: "wav", subdirectory: nil) ?? []
+    return urls.map { (url: URL) in
+        url.deletingPathExtension().lastPathComponent
+    }
 }

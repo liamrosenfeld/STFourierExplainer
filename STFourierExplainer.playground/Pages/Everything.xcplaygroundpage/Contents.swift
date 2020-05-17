@@ -1,5 +1,7 @@
 /*:
  Here's a page where you can play around with everything in one UI
+ 
+ If you would like to try it on your own 32 bit wav files, just drag them into the global resources folder and rerun this page. Keep in mind that if you try it on longer files, it will become more computationally expensive.
 
  _[Back to start](Forward)_
  */

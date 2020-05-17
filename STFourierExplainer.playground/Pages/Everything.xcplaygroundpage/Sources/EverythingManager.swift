@@ -13,7 +13,7 @@ import AVFoundation
 
 class EverythingManager: ObservableObject {
     // External
-    @Published var file: AudioFile {
+    @Published var file: String {
         didSet {
             fileUpdated()
         }
@@ -47,12 +47,12 @@ class EverythingManager: ObservableObject {
     @Published var origResolution = 256
     
     init() {
-        self.file = .lick
+        self.file = "lick"
         fileUpdated()
     }
     
     func fileUpdated() {
-        self.input = AudioInput.readFile(file: file.rawValue)
+        self.input = AudioInput.readFile(file: file)
         self.signal = input.signal
         self.sampleRate = input.format.sampleRate
         self.player = Player(sampleRate: sampleRate)

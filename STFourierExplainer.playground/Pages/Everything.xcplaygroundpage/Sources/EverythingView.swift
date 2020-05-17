@@ -31,8 +31,8 @@ public struct EverythingView: View {
                 Spacer()
 
                 Picker("Audio:", selection: $manager.file) {
-                    ForEach(AudioFile.allCases, id: \.self) {
-                        Text($0.rawValue).tag($0)
+                    ForEach(audioFiles, id: \.self) {
+                        Text($0).tag($0)
                     }
                 }
 
