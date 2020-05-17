@@ -19,18 +19,32 @@ class EverythingManager: ObservableObject {
         }
     }
     
-    @Published var magsForDisplay: [[Float]] = []
+    @Published var magsOrig: [[Float]] = []
+    @Published var magsMod: [[Float]] = []
     
     @Published var sampleRate: Double = 0
     
+    @Published var modifiedAvailable: Bool = false
+    
+    @Published var guidelines: [Float] = [0, 0]
+    
+    @Published var error = ""
+    
     // Internal
     private var input: AVAudioPCMBuffer = AVAudioPCMBuffer()
-    private var signal: [Float] = []
-    private var signalAgain: [Float] = []
+    
+    private var signal: [Float]      = []
+    private var signalNoOLA: [Float] = []
+    private var signalOLA: [Float]   = []
+    private var signalMod: [Float]   = [] {
+        didSet {
+            modifiedAvailable = signalMod.count != 0
+        }
+    }
 
     // constants
     let chunkSize = 512
-    var origResolution = Binding.constant(256)
+    @Published var origResolution = 256
     
     init() {
         self.file = .lick
@@ -46,6 +60,10 @@ class EverythingManager: ObservableObject {
     }
 
     func calc() {
+        // reset mod
+        signalMod = []
+        magsMod = []
+        
         let fourier = Fourier(size: chunkSize)
         
         // deconstruct
@@ -53,10 +71,66 @@ class EverythingManager: ObservableObject {
         let displayFreqs = fourier.stfft(on: signal)
         
         // get mags for display
-        magsForDisplay = fourier.prepMagsForDisplay(displayFreqs)
+        magsOrig = fourier.prepMagsForDisplay(displayFreqs)
         
         // reconstruct
-        signalAgain = fourier.istfftOLA(on: playFreqs)
+        signalOLA = fourier.istfftOLA(on: playFreqs)
+        signalNoOLA = fourier.istfft(on: displayFreqs)
+    }
+    
+    func calcMod() {
+        // get bands from freqs
+        let lowerBand = bandForFreq(guidelines[0])
+        let upperBand = bandForFreq(guidelines[1])
+        
+        // check that bands are valid
+        if upperBand > origResolution {
+            error = "Maximum is out of range"
+            signalMod = []
+            magsMod = []
+            return
+        } else if upperBand < lowerBand {
+            error = "Minimum is greater than maximum"
+            signalMod = []
+            magsMod = []
+            return
+        } else if lowerBand < 0 {
+            error = "Minimum is less than 0"
+            signalMod = []
+            magsMod = []
+            return
+        } else {
+            error = ""
+        }
+
+        // Create zero array to replace each section with
+        let range = lowerBand..<upperBand
+        let length = range.count
+        let zeros = [Float](repeating: 0, count: length)
+
+        // Get what to replace
+        let fourier = Fourier(size: chunkSize)
+        let stfftOLA = fourier.stfftOLA(on: signal)
+        
+        // Replace
+        for complexBuffer in stfftOLA {
+            complexBuffer.real.replaceSubrange(range, with: zeros)
+            complexBuffer.imag.replaceSubrange(range, with: zeros)
+        }
+        
+        // signal from the modified components.
+        signalMod = fourier.istfftOLA(on: stfftOLA)
+
+        // non-OLA forward to display on the spectrogram.
+        let modifiedStfft = fourier.stfft(on: signalMod)
+        magsMod  = fourier.prepMagsForDisplay(modifiedStfft)
+    }
+    
+    func bandForFreq(_ freq: Float) -> Int {
+        let nyquistFreq = sampleRate / 2
+        let freqPerBand = Float(nyquistFreq) / Float(origResolution)
+        let band = freq / Float(freqPerBand)
+        return Int(band)
     }
     
     // MARK: - Player
@@ -67,8 +141,18 @@ class EverythingManager: ObservableObject {
         player.play(buffer)
     }
     
-    func playReconstructed() {
-        let buffer = player.makeBuffer(with: signalAgain)
+    func playNoOLA() {
+        let buffer = player.makeBuffer(with: signalNoOLA)
+        player.play(buffer)
+    }
+    
+    func playOLA() {
+        let buffer = player.makeBuffer(with: signalOLA)
+        player.play(buffer)
+    }
+    
+    func playMod() {
+        let buffer = player.makeBuffer(with: signalMod)
         player.play(buffer)
     }
 }

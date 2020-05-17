@@ -94,6 +94,15 @@ public class Fourier {
         
         return freqs
     }
+    
+    /// inverse short time fast fourier transform, does not use OLA
+    /// - Parameter complexBuffer: Complex buffer from `stfft`
+    /// - Returns: the original signal, of length `size`
+    public func istfft(on complexBuffer: [ComplexBuffer]) -> [Float] {
+        let chunksAgain: [[Float]] = complexBuffer.map { ifft(complexBuffer: $0.split) }
+        let signalAgain: [Float] = chunksAgain.flatMap { $0 }
+        return signalAgain
+    }
 
     /// fast fourier transform
     /// - Parameter inBuffer: Audio data in mono format
@@ -122,7 +131,6 @@ public class Fourier {
         
         return outBuffer
     }
-
 
     public func ifft(complexBuffer: DSPSplitComplex) -> [Float] {
         // do inverse
