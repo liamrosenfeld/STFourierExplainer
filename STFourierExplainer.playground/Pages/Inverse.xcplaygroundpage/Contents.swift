@@ -7,7 +7,7 @@
  
  ## How?
  
- Magnitudes tell us what frequencies the components are at, but not their phase (the displacement across time of a wave). Luckily, the Accelerate FFT returns complex numbers (essentially acting as vectors) where the angle of the vector represents phase. We can then pass those complex numbers back into the IFFT to get the original signal. Since both the magnitude and the phase can be calculated from those complex number vectors, the IFFT can return a signal that is nearly identical to the original signal.
+ Magnitudes tell us the frequencies of the components, but not their phase (the displacement across time of a wave). Luckily, the Accelerate FFT returns complex numbers (essentially acting as vectors) where the angle of the vector represents phase. We can then pass those complex numbers back into the IFFT to get the original signal. Since both the magnitude and the phase can be calculated from those complex number vectors, the IFFT can return a signal that is nearly identical to the original.
  
  */
 
@@ -65,17 +65,17 @@ let signalAgain: [Float] = chunksAgain.flatMap { $0 }
  
  Luckily, there is a method to work around it.
  
- ## The Overlap-Add Method
+ ## The Overlap-Add Method (OLA)
  
  By doing OLA we’re able to have the inverse still include the components that were previously reduced.
  
  As you probably could figure the overlap-add method has two main components: overlapping and adding.
  
- The overlap component starts with the forward fourier transform. The chunks are taken from the signal where the starting position of the chunk only increases by specific amount that is less than the chunk size each chunk. That distance will be referred to as the hop size. Since the hop size is less than the chunk size, the chunks will overlap.
+ The overlap component starts with the forward fourier transform. The chunks are taken from the signal where the starting position of the chunk only increases by a specific amount that is less than the chunk size. That distance will be referred to as the hop size. Since the hop size is less than the chunk size, the chunks will overlap.
  
  The add component then comes in during the inverse. After each chunk's complex buffer goes through the IFFT to turn back into signal, they are then recombined into the original signal, with overlapping sections adding together.
  
- 2 is the standard overlap ratio so for higher quality regenerations that use more overlaps, the final signal needs to be scaled down by `overlapRatio / 2`
+ 1:2 is the standard overlap ratio so for higher quality regenerations that use more overlaps, the final signal needs to be scaled down by `overlapRatio / 2`
  
  Now let's dig into the code to make this happen.
  

@@ -3,11 +3,11 @@
 
  # Manipulating The Components
 
- To return to the smoothie analogy, imagine if you made a large amount of mixed berry smoothie. However, someone that you were going to give it to doesn’t like blueberries. Un-blending the smoothie would allow you to remove those blueberries after the fact. That is effectively what we’re going to do to the ringing in this waveform.
+ To return to the smoothie analogy, imagine if you made a large amount of mixed berry smoothie. However, someone that you were going to give it to doesn’t like blueberries. Un-blending the smoothie would allow you to remove those blueberries after the fact. That is effectively what we’re going to do to the high pitch squeal in this waveform.
 
- In the interest of speed and simplicity, this example will zero out the components we want to remove. In full applications the modification process would be a lot more nuanced so it is not as destructive to the signal we want to save, but it would still be the same general idea.
+ In the interest of speed and simplicity, this example will zero out the components we want to remove. In full applications, the modification process would be a lot more nuanced so it is not as destructive to the signal we want to save, but it would still be the same general idea.
  
- To demonstrate this removal I modified the piano track of the lick by adding in a 3500 Hz sine wave. It's high enough that's its noticeable but not overly unpleasant (though I wouldn't recommend turning your speakers that high on this page).
+ To demonstrate this removal I modified the piano track of The Lick by adding in a 3500 Hz sine wave. It's high enough that's its noticeable but not overly unpleasant (though I wouldn't recommend turning your speakers that high on this page).
 
 */
 
@@ -25,13 +25,11 @@ var stfftOLA = fourier.stfftOLA(on: signal)
 let origMags = fourier.prepMagsForDisplay(stfftDisplay)
 
 /*:
- Now we need a way to translate from what frequency we want into the respective index of the complex buffer.
+ Now we need a way to find the index of the complex buffer which contains the frequency we want.
  
  The Nyquist frequency of the an audio file (which is the maximum frequency a file can support) is half of its sample rate.
- 
- That is because if a component as such a high frequency that the sample rate can't pick up on peaks, it won't be able to be stored.
- 
- It is the top frequency of the top band, so it provides a hard ceiling that everything else can be equally distributed under.
+ Because if a component has such a high frequency that the sample rate can't pick up on peaks, it won't be able to be stored.
+ It is the top frequency of the top band, so it provides a hard ceiling, under which everything else can be equally distributed.
  
  A similar method is used in `Sources/Spectrogram/NSSpectrogramView.swift` in order to draw the y-axis frequency labels and the frequency guidelines.
 */
@@ -69,18 +67,18 @@ for complexBuffer in stfftOLA {
     complexBuffer.imag.replaceSubrange(range, with: zeros)
 }
 
-//: Now we can do the inverse to get a signal from the modified components.
+//: Now we can perform the inverse to get a signal from the modified components.
 
 let modifiedSignal = fourier.istfftOLA(on: stfftOLA)
 
-//: And do a non-OLA forward to display on the spectrogram.
+//: And perform a non-OLA forward to display on the spectrogram.
 
 let modifiedStfft = fourier.stfft(on: modifiedSignal)
 let modifiedMags  = fourier.prepMagsForDisplay(modifiedStfft)
 
 /*:
  You may notice that black void we added in the manipulated spectrogram doesn't exactly match up with the frequency range we supposedly removed.
- That's because the affects the bands don't line up with a single frequency, but rather a couple close together.
+ That is due to the bands not lining up with a single frequency, but rather a group.
  If you remember from the first page, the "resolution" of the bands is determined by the window size.
  512 tends to be a good balance, but it's far from a 1:1 proportion.
  That sloppiness is why we had to remove a good chunk around 3500 Hz to remove the troublesome sine wave.

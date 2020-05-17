@@ -3,11 +3,8 @@
  
  Hello! I'm Liam Rosenfeld. I'm an 11th grader from Florida and this is my WWDC20 Swift Student Challenge submission.
  It is a Swift Playground that explains the audio application of the short time fourier transform.
- 
  Last year I was lucky enough to earn a WWDC19 scholarship, with [a playground](https://github.com/liamrosenfeld/FourierArtist) that used a discrete fourier transform to draw a path using a series of orbiting epicycles.
- 
- When I explained what my project did the most common question I received was "what is it good for?", to which I normally responded "well for this application? just looking cool." However, I continued doing research into that specific application of mathematics and found how central it is to audio applications.
- 
+ When explaining my project, the most common question I received was "what is it good for?". I would respond "well for this application? just looking cool." However, I continued learning about that area of mathematics and found how fourier transforms apply to digital signal processing.
  As a member of my high school band, and general music lover, that intrigued me and I went down the rabbit hole of research.
  
  Now without further ado, let's dig into this together.
@@ -19,29 +16,25 @@
  
  Waves are like smoothies.
  
- Think of each component of a wave as a fruit. Each has their own certain frequency and amplitude. But when combined together, they become this indiscernible mush with each still maintaining their individual properties.
+ Think of each component of a wave as fruit. Each has their own certain frequency and amplitude. But when combined together, they become an indiscernible mush with each fruit contributing their individual properties.
+ Fourier transforms allow you to un-blend that smoothie.
  
- What a fourier transform does is un-blend that smoothie.
+ A discrete fast fourier transform (DFFT) takes in a signal in the form of an array of samples and returns the individual magnitudes for each frequency.
  
- For a discrete fast fourier transform (DFFT) it takes in an array of signal and returns the individual magnitudes for each frequency.
+ Last year [my playground](https://github.com/liamrosenfeld/FourierArtist) related the equation of a DFFT to code and provided a visual proof. If you want to explore the vector calculus behind this all, check out [this absolutely wonderful video](https://youtu.be/spUNpyF58BY) by 3Blue1Brown.
  
- To prevent this from overlapping with my submission last year, I won't dig too much into the math. If you want an explanation there is [my playground from last year](https://github.com/liamrosenfeld/FourierArtist) which implements a DFFT transform in Swift and [this absolutely wonderful video](https://youtu.be/spUNpyF58BY) by 3Blue1Brown which digs into the vector calculus behind it.
- 
- This playground uses Accelerate's implementation of the DFFT because the scale of the signal wold be too slow on an imperative implementation. I first wrote this using the old API and then discovered the Swift Enum wrapper and converted it over to that to increase readability. It was an absolute joy to use—if you know someone on the Accelerate team, please give them a high five after social distancing is over.
+ This playground uses Accelerate's implementation of the DFFT because we will be working with relatively large signals that would be too slow on an imperative implementation. I first wrote this using the old API and then discovered the Swift Enum wrapper and converted it over to increase readability. It was an absolute joy to use—if you know someone on the Accelerate team, please give them a high five after social distancing is over.
  
  
  ## The Short Time Fast Fourier Transform (STFFT)
  
  A single DFFT works great when a signal never changes, but if audio never changed it would be quite boring.
- 
  So, the STFFT gets around that by essentially breaking down the signal into chunks, applying a window to reduce noise, and then applying a DFFT to each chunk.
  
  ## Spectrograms
  
  Spectrograms are a representation of all the magnitudes of the component frequencies of a sound over time.
- 
  The spectrogram that will be used throughout this playground will have time on the x-axis and frequency (in hertz) on the y-axis.
- 
  The code that draws the spectrogram using core graphics can be found in `Spectrogram/NSSpectrogramView.swift` in the global Sources folder.
  
  Let's use a STFFT to generate a spectrogram!
@@ -54,9 +47,9 @@ import Accelerate
 // I found 512 to be a good balance between the two for these samples
 let size = 512
 
-// This gets the amplitudes of the waveform stored in a wav file
+// This grabs the amplitudes of the waveform stored in a wav file
 // You can change this to any file in resources (or add your own)
-// Currently it's the lick... mmmmm jazz
+// Currently it's The Lick... mmmmm jazz
 // https://youtu.be/krDxhnaKD7Q
 let file = AudioInput.readFile(file: "lick")
 let signal = file.signal
@@ -84,11 +77,11 @@ func fft(buffer inBuffer: [Float]) -> ComplexBuffer {
     // A FFT effectively assumes that the end of the input leads directly back into the start, causing an infinite loop of a signal
     // However, if there is a jump between the end and the start the FFT can pick up on false frequencies
     // Windowing reduces the amplitude of the wave as it approaches the sides of the chunk, so both ends naturally end at 0
-    // This playground uses the Hann window which, in my testing, I found to be a good balance between not being overly aggressive and still ending at 0
-    // This is generally very beneficial but, as we’ll see in the next page, it can be problematic when regenerating the signal
+    // This playground uses the Hann window, which in my testing, I found to be a good balance between not being overly aggressive and still ending at 0
+    // This is beneficial, but as we’ll see in the next page, it can be problematic when regenerating the signal
     //
     // .* is a custom operator implemented in Array+Math.swift that uses Accelerate behind the scenes
-    // It's shamelessly copied from Matlab. I generally find Matlab annoying, but those element-wise operators are an exception.
+    // It's shamelessly copied from Matlab. I have an interesting relationship with Matlab, but those element-wise operators are convenient.
     let windowedInterleaved = inBuffer .* window
     
     // Convert the interleaved vector into a complex split vector

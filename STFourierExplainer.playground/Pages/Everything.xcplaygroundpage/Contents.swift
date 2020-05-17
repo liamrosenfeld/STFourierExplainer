@@ -13,13 +13,11 @@ PlaygroundPage.current.setLiveView(view)
 /*:
  ## Going Further: Overtones
  
- Timbre (pronounced tam-ber) is the unique sound of an instrument. Tone is then the quality of sound within the predefined range if the instrument. The natural phenomena of overtones contributes greatly to both.
- 
- It may seem intuitive that the file "oneNote" would only have one frequency. However, a quick toss into the spectrogram would show that is not the case.
- 
+ Timbre (pronounced tam-ber) is the unique sound of an instrument. Tone is the quality of sound within the predefined range of the instrument. The natural phenomena of overtones contributes greatly to both.
+ It may seem intuitive that the file "oneNote" would only have one frequency. However, a quick examination with the spectrogram would show that is not the case.
  While the fundamental frequency is still the most prominent, there are several overtones above that fundamental pitch.
  
- Try using the modifier to remove some (or all) of the overtones and listening to how it affects the timbre of the clip. The easiest to do this on is `oneNote`.
+ Try using the modifier to remove some (or all) of the overtones and listen to how it affects the timbre of the clip. The easiest clip to do this on is `oneNote`.
  
  If you want to remove all the overtones from `oneNote` try the range 700-4000. For `lick`, try 600-5000.
  
