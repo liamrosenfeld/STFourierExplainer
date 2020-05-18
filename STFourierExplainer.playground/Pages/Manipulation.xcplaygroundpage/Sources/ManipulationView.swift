@@ -20,6 +20,8 @@ public struct ManipulationView: View {
     
     @State var guidelines: [Float]
     
+    @State private var playing = false
+    
     private var player: Player
     
     public init(
@@ -55,7 +57,7 @@ public struct ManipulationView: View {
                     self.play(self.origSignal)
                 }, label: {
                     Text("Play")
-                })
+                }).disabled(self.playing)
             }
             SpectrogramView($origMags, sampleRate: $sampleRate, origResolution: $origResolution, guidelines: $guidelines)
                 .frame(minWidth: 750, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
@@ -72,7 +74,7 @@ public struct ManipulationView: View {
                     self.play(self.modSignal)
                 }, label: {
                     Text("Play")
-                })
+                }).disabled(self.playing)
             }
             SpectrogramView($modMags, sampleRate: $sampleRate, origResolution: $origResolution)
                 .frame(minWidth: 750, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
@@ -82,6 +84,9 @@ public struct ManipulationView: View {
     
     func play(_ signal: [Float]) {
         let buffer = player.makeBuffer(with: signal)
-        player.play(buffer)
+        playing = true
+        player.play(buffer) {
+            self.playing = false
+        }
     }
 }

@@ -12,6 +12,9 @@ public struct EverythingView: View {
     
     @ObservedObject private var manager = EverythingManager()
     
+    // this needs to be @State because SwiftUI delays updating when disabled() refers to @Published
+    @State private var playing = false
+    
     public init() { }
     
     public var body: some View {
@@ -39,22 +42,22 @@ public struct EverythingView: View {
                 Spacer()
 
                 Button(action: {
-                    self.manager.play()
+                    self.play(self.manager.signal)
                 }, label: {
                     Text("Play Original")
-                })
+                }).disabled(self.playing)
                 
                 Button(action: {
-                    self.manager.playNoOLA()
+                    self.play(self.manager.signalNoOLA)
                 }, label: {
                     Text("Play Reconstructed no OLA")
-                })
+                }).disabled(self.playing)
 
                 Button(action: {
-                    self.manager.playOLA()
+                    self.play(self.manager.signalOLA)
                 }, label: {
                     Text("Play Reconstructed with OLA")
-                })
+                }).disabled(self.playing)
 
                 Spacer()
             }.padding()
@@ -92,15 +95,23 @@ public struct EverythingView: View {
                 ).frame(width: 750, height: 600)
                 
                 Button(action: {
-                    self.manager.playMod()
+                    self.play(self.manager.signalMod)
                 }, label: {
                     Text("Play Manipulated")
-                })
+                }).disabled(self.playing)
                 
             }
             
             Spacer()
         }.frame(minWidth: 750, maxWidth: .infinity, minHeight: 1450, maxHeight: .infinity).padding().background(Color.black)
+    }
+    
+    func play(_ signal: [Float]) {
+        let buffer = manager.player.makeBuffer(with: signal)
+        playing = true
+        manager.player.play(buffer) {
+            self.playing = false
+        }
     }
 }
 

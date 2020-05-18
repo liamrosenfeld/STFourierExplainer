@@ -35,7 +35,7 @@ public struct Player {
 
     }
 
-    public func play( _ buffer: AVAudioPCMBuffer) {
+    public func play( _ buffer: AVAudioPCMBuffer, _ completionHandler: AVAudioNodeCompletionHandler? = nil) {
         // engine config
         let mixer = engine.outputNode
         engine.attach(playerNode)
@@ -44,7 +44,7 @@ public struct Player {
 
         // play
         playerNode.play()
-        playerNode.scheduleBuffer(buffer, completionHandler: nil)
+        playerNode.scheduleBuffer(buffer, completionHandler: completionHandler)
 
     }
 }

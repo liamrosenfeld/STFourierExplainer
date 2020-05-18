@@ -30,18 +30,27 @@ class EverythingManager: ObservableObject {
     
     @Published var error = ""
     
-    // Internal
-    private var input: AVAudioPCMBuffer = AVAudioPCMBuffer()
+    var playing = false {
+        didSet {
+            self.objectWillChange.send()
+        }
+    }
     
-    private var signal: [Float]      = []
-    private var signalNoOLA: [Float] = []
-    private var signalOLA: [Float]   = []
-    private var signalMod: [Float]   = [] {
+    // Both
+    var player: Player = Player(sampleRate: 0)
+    
+    var signal: [Float]      = []
+    var signalNoOLA: [Float] = []
+    var signalOLA: [Float]   = []
+    var signalMod: [Float]   = [] {
         didSet {
             modifiedAvailable = signalMod.count != 0
         }
     }
-
+    
+    // Internal
+    private var input: AVAudioPCMBuffer = AVAudioPCMBuffer()
+    
     // constants
     let chunkSize = 512
     @Published var origResolution = 256
@@ -131,29 +140,6 @@ class EverythingManager: ObservableObject {
         let freqPerBand = Float(nyquistFreq) / Float(origResolution)
         let band = freq / Float(freqPerBand)
         return Int(band)
-    }
-    
-    // MARK: - Player
-    private var player: Player = Player(sampleRate: 0)
-    
-    func play() {
-        let buffer = player.makeBuffer(with: signal)
-        player.play(buffer)
-    }
-    
-    func playNoOLA() {
-        let buffer = player.makeBuffer(with: signalNoOLA)
-        player.play(buffer)
-    }
-    
-    func playOLA() {
-        let buffer = player.makeBuffer(with: signalOLA)
-        player.play(buffer)
-    }
-    
-    func playMod() {
-        let buffer = player.makeBuffer(with: signalMod)
-        player.play(buffer)
     }
 }
 

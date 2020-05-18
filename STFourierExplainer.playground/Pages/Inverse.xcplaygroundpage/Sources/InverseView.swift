@@ -20,6 +20,8 @@ public struct InverseView: View {
     private var signalInvNoOLA: [Float]
     private var signalInvOLA: [Float]
     
+    @State private var playing = false
+    
     public init(
         magsForDisplay: [[Float]],
         signalOrig: [Float],
@@ -55,19 +57,19 @@ public struct InverseView: View {
                     self.play(self.signalOrig)
                 }, label: {
                     Text("Play Original")
-                })
+                }).disabled(self.playing)
 
                 Button(action: {
                     self.play(self.signalInvNoOLA)
                 }, label: {
                     Text("Play Inverse Without OLA")
-                })
+                }).disabled(self.playing)
                 
                 Button(action: {
                     self.play(self.signalInvOLA)
                 }, label: {
                     Text("Play Inverse With OLA")
-                })
+                }).disabled(self.playing)
 
                 Spacer()
             }.padding()
@@ -78,6 +80,9 @@ public struct InverseView: View {
     
     func play(_ signal: [Float]) {
         let buffer = player.makeBuffer(with: signal)
-        player.play(buffer)
+        playing = true
+        player.play(buffer) {
+            self.playing = false
+        }
     }
 }
