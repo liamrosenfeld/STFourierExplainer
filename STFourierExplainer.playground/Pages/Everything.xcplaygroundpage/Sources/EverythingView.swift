@@ -88,18 +88,17 @@ public struct EverythingView: View {
                     .font(.headline)
                     .foregroundColor(Color.white)
                 
-                SpectrogramView(
-                    $manager.magsMod,
-                    sampleRate: $manager.sampleRate,
-                    origResolution: $manager.origResolution
-                ).frame(width: 750, height: 600)
-                
                 Button(action: {
                     self.play(self.manager.signalMod)
                 }, label: {
                     Text("Play Manipulated")
                 }).disabled(self.playing)
                 
+                SpectrogramView(
+                    $manager.magsMod,
+                    sampleRate: $manager.sampleRate,
+                    origResolution: $manager.origResolution
+                ).frame(width: 750, height: 600)
             }
             
             Spacer()

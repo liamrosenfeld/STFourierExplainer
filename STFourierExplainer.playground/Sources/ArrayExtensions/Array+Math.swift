@@ -9,8 +9,6 @@
 import Foundation
 import Accelerate
 
-// there's not much I like about matlab... but wow are these convenient
-
 infix operator .+ : AdditionPrecedence
 infix operator .* : MultiplicationPrecedence
 

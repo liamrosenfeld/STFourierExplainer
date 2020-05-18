@@ -9,7 +9,9 @@
  
  Now without further ado, let's dig into this together.
  
- _(If you want to skip the explanation, jump to the [last page](Everything))_
+ _Note: There is a live view for every page._
+ 
+ _(If you want to skip the explanation pages, jump to the [last page](Everything))_
 
  
  ## A Brief Recap of the Fourier Transform
@@ -135,7 +137,7 @@ mags = mags.zerosTrimmed.map {
  
  Now that we've gotten magnitudes from the signal, let's try to get it back
 
- [Next](@next)
+ __[Next](@next)__
  
 */
 

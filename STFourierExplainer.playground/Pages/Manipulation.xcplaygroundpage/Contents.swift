@@ -11,7 +11,8 @@
 
 */
 
-//: Let's first do a STFFT without OLA for display and with OLA for manipulation
+//: Let's first do a STFFT without OLA for display and with OLA for manipulation.
+//: I wrote documentation for all methods of `Fourier`, so if you need a refresher just view quick help for them
 
 let file = AudioInput.readFile(file: "lickRinging")
 let signal = file.signal
@@ -85,7 +86,7 @@ let modifiedMags  = fourier.prepMagsForDisplay(modifiedStfft)
  
  The next page provides a live view interface to play with the concepts from the last three pages.
  
- [Next](@next)
+ __[Next](@next)__
  */
 
 // MARK: - Display

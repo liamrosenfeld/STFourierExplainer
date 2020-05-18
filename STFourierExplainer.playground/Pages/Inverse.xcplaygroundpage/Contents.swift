@@ -5,6 +5,8 @@
  
  The inverse STFFT (ISTFFT) allow us to get the original signal from the complex buffer returned from the forward STFFT.
  
+ _Note: this page takes a little longer to run_
+ 
  ## How?
  
  Magnitudes tell us the frequencies of the components, but not their phase (the displacement across time of a wave). Luckily, the Accelerate FFT returns complex numbers (essentially acting as vectors) where the angle of the vector represents phase. We can then pass those complex numbers back into the IFFT to get the original signal. Since both the magnitude and the phase can be calculated from those complex number vectors, the IFFT can return a signal that is nearly identical to the original.
@@ -142,7 +144,7 @@ let signalAgainOLA = overlapAdd(chunksAgainOLA, size: size, hop: hop)
  
  Other then it just being interesting, it's an opportunity to mess with the component frequencies to manipulate the waveform.
  
- [Next](@next)
+ __[Next](@next)__
 */
 
 // MARK: - Display

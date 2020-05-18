@@ -32,4 +32,6 @@ PlaygroundPage.current.setLiveView(view)
  - [FFT convolution and the overlap-add method by Steven W. Smith](https://www.eetimes.com/fft-convolution-and-the-overlap-add-method/#)
  - [Lecture by Mike Cohen](https://youtu.be/8nZrgJjl3wc)
  
+ I'd like to thank all of my teachers for helping me explore these new worlds.
+ 
  */

@@ -1,5 +1,5 @@
 //
-//  ForwardView.swift
+//  ManipulationView.swift
 //  ShortTimeFourier
 //
 //  Created by Liam Rosenfeld on 5/15/20.
