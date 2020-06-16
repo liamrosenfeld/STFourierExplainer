@@ -11,4 +11,4 @@ It guides you along the creation of multiple live views that all utilize the Sho
 3. Combines the initial steps into a real world application. That application is using the STFFT to remove a high pitch squeal from a sound file. It ties both the forward and inverse STFFT from the previous pages.
 4. Combines the live view of all the previous pages, giving a way to quickly experience the final product without the explanations.
 
-Status: Submitted
+**Status: Accepted**
